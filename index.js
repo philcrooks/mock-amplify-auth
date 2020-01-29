@@ -1,5 +1,5 @@
-const cryptoJs = require("crypto-js");
 const jwt = require("jsonwebtoken");
+const { encodeJwt } = require("./tokens");
 
 const STORAGE_KEY = "mock-amplify-auth.state";
 const USER_ID_PREFIX = "mock-auth-";
@@ -27,8 +27,9 @@ function signUp(email) {
   return timerPromise(1200);
 }
 
-function signIn(email) {
-  updateState({ email, session: createSession({ email }), loggedIn: true });
+async function signIn(email) {
+  const session = await createSession({ email });
+  updateState({ email, session, loggedIn: true });
   return timerPromise(700);
 }
 
@@ -70,31 +71,15 @@ function extractEmail(userId) {
   ).toString();
 }
 
-function createSession({ email }) {
-  const timeS = Math.floor(Date.now() / 1000);
+async function createSession({ email }) {
   const cognitoUsername = `${USER_ID_PREFIX}${Buffer.from(email).toString(
     "base64"
   )}`;
-  const idTokenPayload = {
-    sub: cognitoUsername,
-    token_use: "id",
-    email_verified: true,
-    aud: "mock-auth",
-    auth_time: timeS,
-    iat: timeS,
-    exp: timeS + 100000,
-    iss: "https://cognito-idp.local.amazonaws.com/local_mock-auth",
-    "cognito:username": cognitoUsername,
-    email
-  };
-  const idToken = {
-    jwtToken: jwt.sign(idTokenPayload, "mock-auth-secret"),
-    payload: idTokenPayload
-  };
-
+  const idToken = await encodeJwt(cognitoUsername, email);
   return {
     idToken,
     clockDrift: 0
   };
 }
+
 module.exports = Auth;

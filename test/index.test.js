@@ -2,6 +2,8 @@
 
 const importFresh = require("import-fresh");
 const { test } = require("tap");
+const Auth = require("..");
+const { decodeJwt } = require("../tokens");
 
 const store = {};
 
@@ -17,8 +19,6 @@ const localStorage = {
 global.window = {
   localStorage
 };
-
-const Auth = require("..");
 
 const email = "test@example.com";
 
@@ -45,9 +45,8 @@ test("sign in succeeds", async t => {
 
 test("email address can be extracted from user ID", async t => {
   await Auth.signIn(email);
-  debugger;
   const session = await Auth.currentSession();
-  const { sub } = session.idToken.payload;
+  const { sub } = await decodeJwt(session.idToken);
   const extractedEmail = Auth.extractEmail(sub);
   t.equal(extractedEmail, email);
 });
