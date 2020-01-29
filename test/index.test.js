@@ -4,6 +4,7 @@ const importFresh = require("import-fresh");
 const { test } = require("tap");
 const Auth = require("..");
 const { decodeJwt } = require("../tokens");
+const { userList } = require("../users");
 
 const store = {};
 
@@ -40,15 +41,18 @@ test("resend signup succeeds", async t => {
 });
 
 test("sign in succeeds", async t => {
-  await Auth.signIn(email);
+  const [user] = userList;
+  await Auth.signIn(user);
 });
 
 test("email address can be extracted from user ID", async t => {
-  await Auth.signIn(email);
+  const [user] = userList;
+  await Auth.signIn(user);
   const session = await Auth.currentSession();
-  const { sub } = await decodeJwt(session.idToken);
-  const extractedEmail = Auth.extractEmail(sub);
-  t.equal(extractedEmail, email);
+  const attribute = "custom:team";
+  const { email, [attribute]: team } = await decodeJwt(session.idToken);
+  t.equal(email, user.username);
+  t.equal(team, user[attribute]);
 });
 
 test("logged in after sign in", async t => {

@@ -23,11 +23,11 @@ const getPrivateKey = () => {
 
 const findPublicKey = kid => publicKeys.find(k => k.kid === kid);
 
-const encodeJwt = (username, email) => {
+const encodeJwt = (user, cognitoUsername) => {
   return new Promise((resolve, reject) => {
     const timeS = Math.floor(Date.now() / 1000);
     const payload = {
-      sub: username,
+      sub: cognitoUsername,
       token_use: "id",
       email_verified: true,
       aud: audience,
@@ -35,8 +35,8 @@ const encodeJwt = (username, email) => {
       iat: timeS,
       exp: timeS + 100000,
       iss: issuer,
-      "cognito:username": username,
-      email
+      "cognito:username": cognitoUsername,
+      ...user
     };
     const { kid: keyid, alg: algorithm, pem } = getPrivateKey();
     jwt.sign(payload, pem, { keyid, algorithm }, (err, signed) => {

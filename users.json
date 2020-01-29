@@ -1,0 +1,10 @@
+[
+  {
+    "username": "ricardo@bemo.co",
+    "password": "Password1",
+    "custom": {
+      "team": "bemo",
+      "confirmed": true
+    }
+  }
+]

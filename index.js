@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { encodeJwt } = require("./tokens");
+const { findUser } = require("./users");
 
 const STORAGE_KEY = "mock-amplify-auth.state";
 const USER_ID_PREFIX = "mock-auth-";
@@ -27,10 +28,13 @@ function signUp(email) {
   return timerPromise(1200);
 }
 
-async function signIn(email) {
-  const session = await createSession({ email });
-  updateState({ email, session, loggedIn: true });
-  return timerPromise(700);
+async function signIn({ username, password }) {
+  const user = findUser(username, password);
+  if (user) {
+    const session = await createSession(user);
+    updateState({ username, session, loggedIn: true });
+  }
+  return timerPromise(700, !!user);
 }
 
 function currentSession() {
@@ -71,11 +75,15 @@ function extractEmail(userId) {
   ).toString();
 }
 
-async function createSession({ email }) {
+async function createSession(userDetails) {
+  const user = { ...userDetails };
+  const { username: email } = user;
+  delete user.username;
+  user.email = email;
   const cognitoUsername = `${USER_ID_PREFIX}${Buffer.from(email).toString(
     "base64"
   )}`;
-  const idToken = await encodeJwt(cognitoUsername, email);
+  const idToken = await encodeJwt(user, cognitoUsername);
   return {
     idToken,
     clockDrift: 0
